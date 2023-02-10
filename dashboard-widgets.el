@@ -449,32 +449,20 @@ If MESSAGEBUF is not nil then MSG is also written in message buffer."
   "Insert a page break line in dashboard buffer."
   (dashboard-append dashboard-page-separator))
 
-(defun dashboard-insert-heading (heading &optional shortcut)
-  "Insert a widget HEADING in dashboard buffer, adding SHORTCUT if provided."
+(defun dashboard-insert-heading (heading &optional icon-id shortcut)
+  "Insert a widget HEADING in dashboard buffer, adding icon from `dashboard-heading-icons` and SHORTCUT if provided."
   (when (and (display-graphic-p) dashboard-set-heading-icons)
     ;; Try loading `all-the-icons'
     (unless (or (fboundp 'all-the-icons-octicon)
                 (require 'all-the-icons nil 'noerror))
       (error "Package `all-the-icons' isn't installed"))
 
-    (insert (cond
-             ((string-equal heading "Recent Files:")
-              (all-the-icons-octicon (cdr (assoc 'recents dashboard-heading-icons))
-                                     :height 1.2 :v-adjust 0.0 :face 'dashboard-heading))
-             ((string-equal heading "Bookmarks:")
-              (all-the-icons-octicon (cdr (assoc 'bookmarks dashboard-heading-icons))
-                                     :height 1.2 :v-adjust 0.0 :face 'dashboard-heading))
-             ((or (string-equal heading "Agenda for today:")
-                  (string-equal heading "Agenda for the coming week:"))
-              (all-the-icons-octicon (cdr (assoc 'agenda dashboard-heading-icons))
-                                     :height 1.2 :v-adjust 0.0 :face 'dashboard-heading))
-             ((string-equal heading "Registers:")
-              (all-the-icons-octicon (cdr (assoc 'registers dashboard-heading-icons))
-                                     :height 1.2 :v-adjust 0.0 :face 'dashboard-heading))
-             ((string-equal heading "Projects:")
-              (all-the-icons-octicon (cdr (assoc 'projects dashboard-heading-icons))
-                                     :height 1.2 :v-adjust 0.0 :face 'dashboard-heading))
-             (t " ")))
+    (insert
+     (let ((key (alist-get icon-id dashboard-heading-icons)))
+       (if key
+        (all-the-icons-octicon key :height 1.2 :v-adjust 0.0 :face 'dashboard-heading)
+        " ")))
+
     (insert " "))
 
   (insert (propertize heading 'face 'dashboard-heading))
@@ -693,7 +681,7 @@ SHORTCUT-CHAR is the keyboard shortcut used to access the section.
 ACTION is theaction taken when the user activates the widget button.
 WIDGET-PARAMS are passed to the \"widget-create\" function."
   `(progn
-     (dashboard-insert-heading ,section-name
+     (dashboard-insert-heading ,section-name ,shortcut-id
                                (if (and ,list ,shortcut-char dashboard-show-shortcuts) ,shortcut-char))
      (if ,list
          (when (and (dashboard-insert-section-list
